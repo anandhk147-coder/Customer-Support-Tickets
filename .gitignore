@@ -9,4 +9,6 @@ venv/
 .vscode/
 *.pdf
 generate_pdf_report.py
+build_detailed_pdf.py
+
 
