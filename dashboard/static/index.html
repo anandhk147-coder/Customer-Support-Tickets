@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-900 text-slate-100">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Customer Support Tickets — Interactive Assessment Dashboard</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Vis.js Network for Graph Visualization -->
+  <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    code, pre { font-family: 'JetBrains Mono', monospace; }
+    #graph-container {
+      height: 480px;
+      border-radius: 0.75rem;
+      background: #0f172a;
+    }
+  </style>
+</head>
+<body class="h-full flex flex-col antialiased">
+  <!-- Top Navigation Bar -->
+  <header class="border-b border-slate-800 bg-slate-950/80 backdrop-blur sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-wrap items-center justify-between gap-4">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center font-bold text-white shadow-lg shadow-blue-500/20">
+          ST
+        </div>
+        <div>
+          <h1 class="text-lg font-bold tracking-tight text-white flex items-center gap-2">
+            Customer Support Tickets
+            <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Local Host</span>
+          </h1>
+          <p class="text-xs text-slate-400">Set 1: Data Pipeline, LLM Evals & Neo4j Knowledge Graph</p>
+        </div>
+      </div>
+      <!-- Tab Navigation -->
+      <nav class="flex items-center space-x-1 bg-slate-900 p-1 rounded-xl border border-slate-800">
+        <button onclick="switchTab('tab-part-a')" id="btn-tab-part-a" class="tab-btn px-4 py-1.5 text-xs font-semibold rounded-lg bg-blue-600 text-white shadow transition-all">
+          Part A: Data & Metrics
+        </button>
+        <button onclick="switchTab('tab-part-b1')" id="btn-tab-part-b1" class="tab-btn px-4 py-1.5 text-xs font-semibold rounded-lg text-slate-400 hover:text-white transition-all">
+          Part B.1: LLM Evals
+        </button>
+        <button onclick="switchTab('tab-part-b2')" id="btn-tab-part-b2" class="tab-btn px-4 py-1.5 text-xs font-semibold rounded-lg text-slate-400 hover:text-white transition-all">
+          Part B.2: Neo4j Graph
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Main Content Area -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+    
+    <!-- Top Summary Stat Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div class="bg-slate-800/60 border border-slate-700/60 rounded-2xl p-5 shadow-sm">
+        <div class="text-xs font-medium text-slate-400 uppercase tracking-wider">Raw Records Processed</div>
+        <div class="mt-2 flex items-baseline justify-between">
+          <span class="text-3xl font-extrabold text-white" id="stat-raw">5</span>
+          <span class="text-xs text-amber-400 bg-amber-400/10 px-2 py-0.5 rounded border border-amber-400/20">1 duplicate removed</span>
+        </div>
+      </div>
+      <div class="bg-slate-800/60 border border-slate-700/60 rounded-2xl p-5 shadow-sm">
+        <div class="text-xs font-medium text-slate-400 uppercase tracking-wider">Cleaned Unique Tickets</div>
+        <div class="mt-2 flex items-baseline justify-between">
+          <span class="text-3xl font-extrabold text-blue-400" id="stat-cleaned">4</span>
+          <span class="text-xs text-blue-400 bg-blue-400/10 px-2 py-0.5 rounded border border-blue-400/20">Across 2 Products</span>
+        </div>
+      </div>
+      <div class="bg-slate-800/60 border border-slate-700/60 rounded-2xl p-5 shadow-sm">
+        <div class="text-xs font-medium text-slate-400 uppercase tracking-wider">Avg Resolution Time</div>
+        <div class="mt-2 flex items-baseline justify-between">
+          <span class="text-3xl font-extrabold text-emerald-400" id="stat-avg-res">13.5 hrs</span>
+          <span class="text-xs text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded border border-emerald-400/20">2 Resolved</span>
+        </div>
+      </div>
+      <div class="bg-slate-800/60 border border-slate-700/60 rounded-2xl p-5 shadow-sm">
+        <div class="text-xs font-medium text-slate-400 uppercase tracking-wider">Multi-Product Customers</div>
+        <div class="mt-2 flex items-baseline justify-between">
+          <span class="text-3xl font-extrabold text-purple-400" id="stat-multi-cust">1</span>
+          <span class="text-xs text-purple-400 bg-purple-400/10 px-2 py-0.5 rounded border border-purple-400/20">Asha Rao</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 1: PART A (Data & Metrics) -->
+    <div id="tab-part-a" class="tab-content space-y-6">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Chart 1: Open vs Resolved per Product -->
+        <div class="bg-slate-800/50 border border-slate-700/60 rounded-2xl p-6">
+          <h2 class="text-base font-bold text-white mb-1">Metric 1: Open vs. Resolved Count Per Product</h2>
+          <p class="text-xs text-slate-400 mb-4">Volume breakdown after deduplication and data sanitization</p>
+          <div class="h-64">
+            <canvas id="chart-product-status"></canvas>
+          </div>
+        </div>
+
+        <!-- Chart 2: Resolution Time Breakdown -->
+        <div class="bg-slate-800/50 border border-slate-700/60 rounded-2xl p-6">
+          <h2 class="text-base font-bold text-white mb-1">Metric 2: Resolution Time (Hours)</h2>
+          <p class="text-xs text-slate-400 mb-4">T1 (CloudSync: 5h) vs T3 (InvoicePro: 22h) & Overall Average (13.5h)</p>
+          <div class="h-64">
+            <canvas id="chart-resolution-time"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tickets Data Table -->
+      <div class="bg-slate-800/50 border border-slate-700/60 rounded-2xl p-6">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <h2 class="text-base font-bold text-white">Cleaned Support Tickets Dataset</h2>
+            <p class="text-xs text-slate-400">Processed data with schema validation and missing issue imputation</p>
+          </div>
+          <span class="text-xs px-2.5 py-1 bg-slate-900 text-slate-300 rounded-md border border-slate-700">
+            Deduplicated Primary Key: <code>ticket_id</code>
+          </span>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs border-collapse">
+            <thead>
+              <tr class="border-b border-slate-700 text-slate-400 uppercase tracking-wider font-semibold">
+                <th class="py-3 px-3">Ticket ID</th>
+                <th class="py-3 px-3">Customer</th>
+                <th class="py-3 px-3">Product</th>
+                <th class="py-3 px-3">Issue Description</th>
+                <th class="py-3 px-3">Status</th>
+                <th class="py-3 px-3">Created At</th>
+                <th class="py-3 px-3">Resolved At</th>
+              </tr>
+            </thead>
+            <tbody id="tickets-table-body" class="divide-y divide-slate-800">
+              <!-- Dynamically Populated -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 2: PART B.1 (LLM Evaluation) -->
+    <div id="tab-part-b1" class="tab-content hidden space-y-6">
+      <div class="bg-slate-800/50 border border-slate-700/60 rounded-2xl p-6">
+        <div class="max-w-3xl">
+          <h2 class="text-base font-bold text-white mb-1">Multi-Dimensional LLM Evaluation Framework</h2>
+          <p class="text-xs text-slate-400 mb-4">
+            Evaluates LLM-generated one-line summaries against human reference summaries across 4 weighted production criteria:
+            <strong>Factual Accuracy (30%)</strong>, <strong>Information Completeness (35%)</strong>, <strong>Entity Attribution (20%)</strong>, and <strong>Utility & Conciseness (15%)</strong>.
+          </p>
+        </div>
+
+        <div id="evals-cards-container" class="grid grid-cols-1 gap-6">
+          <!-- Dynamically Populated -->
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 3: PART B.2 (Neo4j Graph & Query) -->
+    <div id="tab-part-b2" class="tab-content hidden space-y-6">
+      <div class="bg-slate-800/50 border border-slate-700/60 rounded-2xl p-6">
+        <div class="flex flex-wrap items-center justify-between gap-4 mb-4">
+          <div>
+            <h2 class="text-base font-bold text-white">Neo4j Graph Schema & Interactive Visualization</h2>
+            <p class="text-xs text-slate-400">
+              Edges: <code>(:Customer)-[:RAISED]-&gt;(:Ticket)-[:ABOUT]-&gt;(:Product)</code>
+            </p>
+          </div>
+          <div class="flex items-center gap-3">
+            <span class="inline-flex items-center text-xs text-slate-300">
+              <span class="w-3 h-3 rounded-full bg-purple-500 inline-block mr-1.5"></span> Multi-Product Customer (Asha Rao)
+            </span>
+            <span class="inline-flex items-center text-xs text-slate-300">
+              <span class="w-3 h-3 rounded-full bg-blue-500 inline-block mr-1.5"></span> Customer
+            </span>
+            <span class="inline-flex items-center text-xs text-slate-300">
+              <span class="w-3 h-3 rounded bg-emerald-600 inline-block mr-1.5"></span> Product
+            </span>
+          </div>
+        </div>
+
+        <!-- Interactive Graph Canvas -->
+        <div id="graph-container" class="border border-slate-700 shadow-inner"></div>
+
+        <!-- Cypher Query Box -->
+        <div class="mt-6 bg-slate-950 rounded-xl p-5 border border-slate-800">
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-xs font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-2">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+              Target Cypher Query (Find Customers with Tickets for &gt;1 Product)
+            </span>
+            <span class="text-xs text-slate-400">Exact assignment requirement</span>
+          </div>
+          <pre class="text-xs text-slate-200 overflow-x-auto p-3 bg-slate-900 rounded-lg border border-slate-800 leading-relaxed">
+MATCH (c:Customer)-[:RAISED]->(t:Ticket)-[:ABOUT]->(p:Product)
+WITH c, 
+     count(DISTINCT p) AS distinct_products_count, 
+     collect(DISTINCT p.name) AS products,
+     collect(t.ticket_id) AS tickets_raised
+WHERE distinct_products_count > 1
+RETURN c.name AS customer_name, distinct_products_count, products, tickets_raised
+ORDER BY distinct_products_count DESC, customer_name ASC;</pre>
+
+          <div class="mt-4 p-3 bg-blue-950/40 border border-blue-800/40 rounded-lg">
+            <div class="text-xs font-semibold text-blue-300 mb-1">Query Result:</div>
+            <div class="text-xs text-slate-300">
+              <strong>Customer:</strong> Asha Rao | 
+              <strong>Distinct Products (2):</strong> CloudSync, InvoicePro | 
+              <strong>Tickets:</strong> T1, T3
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <footer class="border-t border-slate-800 py-4 text-center text-xs text-slate-500">
+    Customer Support Tickets Solution &copy; 2026 &bull; Ready for Evaluation
+  </footer>
+
+  <!-- Script logic -->
+  <script>
+    let dashboardData = null;
+    let network = null;
+
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+      document.getElementById(tabId).classList.remove('hidden');
+
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('bg-blue-600', 'text-white');
+        btn.classList.add('text-slate-400');
+      });
+      document.getElementById('btn-' + tabId).classList.add('bg-blue-600', 'text-white');
+      document.getElementById('btn-' + tabId).classList.remove('text-slate-400');
+
+      if (tabId === 'tab-part-b2' && network) {
+        setTimeout(() => network.fit(), 100);
+      }
+    }
+
+    async function loadData() {
+      try {
+        const res = await fetch('/api/data');
+        dashboardData = await res.json();
+        renderPartA();
+        renderPartB1();
+        renderPartB2();
+      } catch (err) {
+        console.error("Failed to load dashboard data:", err);
+      }
+    }
+
+    function renderPartA() {
+      // Populate Table
+      const tbody = document.getElementById('tickets-table-body');
+      tbody.innerHTML = dashboardData.cleaned_tickets.map(t => `
+        <tr class="hover:bg-slate-800/40 transition-colors">
+          <td class="py-3 px-3 font-semibold text-white">${t.ticket_id}</td>
+          <td class="py-3 px-3 text-slate-300">${t.customer}</td>
+          <td class="py-3 px-3"><span class="px-2 py-0.5 rounded bg-slate-700/50 text-slate-200 border border-slate-600">${t.product}</span></td>
+          <td class="py-3 px-3 text-slate-300 ${t.issue.startsWith('[Issue') ? 'italic text-amber-400' : ''}">${t.issue}</td>
+          <td class="py-3 px-3">
+            <span class="px-2 py-0.5 rounded-full text-xs font-semibold ${t.status === 'resolved' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'}">
+              ${t.status}
+            </span>
+          </td>
+          <td class="py-3 px-3 text-slate-400 font-mono text-[11px]">${t.created_at}</td>
+          <td class="py-3 px-3 text-slate-400 font-mono text-[11px]">${t.resolved_at || '<span class="text-slate-600">null</span>'}</td>
+        </tr>
+      `).join('');
+
+      // Render Status Chart
+      const pData = dashboardData.product_status_counts;
+      const products = Object.keys(pData);
+      const openCounts = products.map(p => pData[p].open);
+      const resolvedCounts = products.map(p => pData[p].resolved);
+
+      new Chart(document.getElementById('chart-product-status'), {
+        type: 'bar',
+        data: {
+          labels: products,
+          datasets: [
+            { label: 'Open Tickets', data: openCounts, backgroundColor: '#F59E0B', borderRadius: 6 },
+            { label: 'Resolved Tickets', data: resolvedCounts, backgroundColor: '#10B981', borderRadius: 6 }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { labels: { color: '#94a3b8' } } },
+          scales: {
+            x: { ticks: { color: '#94a3b8' }, grid: { color: '#1e293b' } },
+            y: { ticks: { stepSize: 1, color: '#94a3b8' }, grid: { color: '#1e293b' } }
+          }
+        }
+      });
+
+      // Render Resolution Time Chart
+      const resData = dashboardData.resolution_times.avg_resolution_hours_per_product;
+      new Chart(document.getElementById('chart-resolution-time'), {
+        type: 'bar',
+        data: {
+          labels: ['CloudSync (T1)', 'InvoicePro (T3)', 'Overall Average'],
+          datasets: [{
+            label: 'Hours to Resolution',
+            data: [resData.CloudSync, resData.InvoicePro, dashboardData.resolution_times.overall_avg_resolution_hours],
+            backgroundColor: ['#3B82F6', '#8B5CF6', '#10B981'],
+            borderRadius: 6
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { ticks: { color: '#94a3b8' }, grid: { color: '#1e293b' } },
+            y: { ticks: { color: '#94a3b8' }, grid: { color: '#1e293b' }, title: { display: true, text: 'Hours', color: '#64748b' } }
+          }
+        }
+      });
+    }
+
+    function renderPartB1() {
+      const container = document.getElementById('evals-cards-container');
+      container.innerHTML = dashboardData.evaluations.map(e => `
+        <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 hover:border-slate-700 transition">
+          <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
+            <div class="flex items-center gap-2">
+              <span class="px-2.5 py-1 font-bold text-xs bg-blue-500/20 text-blue-300 rounded border border-blue-500/30">
+                Ticket ${e.ticket_id}
+              </span>
+              <span class="text-xs text-slate-400">Product: <strong>${e.product}</strong></span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-xs text-slate-400">Composite Score:</span>
+              <span class="text-sm font-bold ${e.composite >= 4.0 ? 'text-emerald-400' : (e.composite >= 3.0 ? 'text-amber-400' : 'text-red-400')}">
+                ${e.composite} / 5.0 (${e.grade})
+              </span>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 text-xs">
+            <div class="p-3 bg-slate-950 rounded-lg border border-slate-800">
+              <div class="text-[11px] font-semibold text-slate-500 uppercase mb-1">Human Reference Summary:</div>
+              <div class="text-slate-200 italic">"${e.reference}"</div>
+            </div>
+            <div class="p-3 bg-slate-950 rounded-lg border border-slate-800">
+              <div class="text-[11px] font-semibold text-slate-500 uppercase mb-1">LLM-Generated Summary:</div>
+              <div class="text-slate-200 font-medium">"${e.llm}"</div>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3 text-center text-xs">
+            <div class="bg-slate-950 p-2 rounded border border-slate-800">
+              <div class="text-slate-500 text-[10px]">Accuracy (30%)</div>
+              <div class="font-bold text-white">${e.scores.accuracy} / 5</div>
+            </div>
+            <div class="bg-slate-950 p-2 rounded border border-slate-800">
+              <div class="text-slate-500 text-[10px]">Completeness (35%)</div>
+              <div class="font-bold text-white">${e.scores.completeness} / 5</div>
+            </div>
+            <div class="bg-slate-950 p-2 rounded border border-slate-800">
+              <div class="text-slate-500 text-[10px]">Entity (20%)</div>
+              <div class="font-bold text-white">${e.scores.entity} / 5</div>
+            </div>
+            <div class="bg-slate-950 p-2 rounded border border-slate-800">
+              <div class="text-slate-500 text-[10px]">Utility (15%)</div>
+              <div class="font-bold text-white">${e.scores.utility} / 5</div>
+            </div>
+          </div>
+
+          <div class="text-xs text-slate-400 bg-slate-950/40 p-2.5 rounded border border-slate-800/60">
+            <strong class="text-slate-300">Scoring Justification:</strong> ${e.justification}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function renderPartB2() {
+      const container = document.getElementById('graph-container');
+      const data = {
+        nodes: new vis.DataSet(dashboardData.graph.nodes),
+        edges: new vis.DataSet(dashboardData.graph.edges)
+      };
+      const options = {
+        physics: {
+          stabilization: true,
+          barnesHut: { gravitationalConstant: -2800, springLength: 120 }
+        },
+        interaction: { hover: true, tooltipDelay: 100 }
+      };
+      network = new vis.Network(container, data, options);
+    }
+
+    window.addEventListener('DOMContentLoaded', loadData);
+  </script>
+</body>
+</html>

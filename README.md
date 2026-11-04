@@ -48,17 +48,12 @@ The entire core pipeline uses the **Python Standard Library** with zero mandator
 git clone <your-repo-url>
 cd customer-support-tickets
 
-# 2. Run Part A (Data Cleaning & Analytics)
-python part_a/run_part_a.py
+# 2. Run All Pipelines, Checks & Tests in CLI
+python main.py
 
-# 3. Run Part B.1 (LLM Summary Evaluation)
-python part_b/evaluate_summaries.py
-
-# 4. Run Part B.2 (Graph Model & Cypher Query)
-python part_b/graph_simulation.py
-
-# 5. Run Unit Tests
-python -m unittest discover tests
+# 3. Launch the Interactive Web Dashboard (Local Host)
+python dashboard/server.py
+# Then open http://localhost:8000 in your browser!
 ```
 
 ---
