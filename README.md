@@ -58,6 +58,22 @@ python dashboard/server.py
 
 ---
 
+## 🖥️ Interactive Web Dashboard Snapshots (`localhost:8000`)
+
+The project includes an interactive web dashboard built with vanilla JavaScript, Tailwind CSS, Chart.js, and Vis.js network visualization. Run `python dashboard/server.py` and navigate to `http://localhost:8000`:
+
+### 1. Part A: Data Pipeline, Status Distribution & Resolution Time Analytics
+![Part A Dashboard](docs/screenshots/dashboard_part_a_analytics.png)
+
+### 2. Part B.1: Multi-Dimensional LLM Summary Evaluation Rubric
+![Part B.1 Evals Dashboard](docs/screenshots/dashboard_part_b1_llm_evals.png)
+
+### 3. Part B.2: Neo4j Knowledge Graph Visualizer & Cypher Query Explorer
+![Part B.2 Neo4j Graph Dashboard](docs/screenshots/dashboard_part_b2_neo4j_graph.png)
+
+
+---
+
 ## 📊 Summary of Results
 
 ### Part A: Data Cleaning & Analytics

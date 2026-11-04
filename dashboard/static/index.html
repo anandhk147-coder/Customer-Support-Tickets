@@ -398,7 +398,21 @@ ORDER BY distinct_products_count DESC, customer_name ASC;</pre>
       network = new vis.Network(container, data, options);
     }
 
-    window.addEventListener('DOMContentLoaded', loadData);
+    window.addEventListener('DOMContentLoaded', async () => {
+      await loadData();
+      const hash = window.location.hash ? window.location.hash.substring(1) : null;
+      const urlParams = new URLSearchParams(window.location.search);
+      const tabParam = urlParams.get('tab') || hash;
+      if (tabParam && document.getElementById(tabParam)) {
+        switchTab(tabParam);
+      }
+    });
+    window.addEventListener('hashchange', () => {
+      const hash = window.location.hash.substring(1);
+      if (hash && document.getElementById(hash)) {
+        switchTab(hash);
+      }
+    });
   </script>
 </body>
 </html>
