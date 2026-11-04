@@ -1,0 +1,4 @@
+# Core dependencies are 100% Python Standard Library (Python 3.8+)
+# Optional libraries for production deployment & live Neo4j connectivity:
+neo4j>=5.14.0
+pytest>=7.4.0
